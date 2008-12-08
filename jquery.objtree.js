@@ -1,8 +1,10 @@
 
 (function($){
 
-$.objtree = function(settings){
-  $.extend(ObjTree.prototype, settings);  
+$.objtree = function(opts){
+    ObjTree.prototype.xmlDecl = opts.xmlDecl||ObjTree.prototype.xmlDecl;
+    ObjTree.prototype.attr_prefix = opts.attr_prefix||ObjTree.prototype.attr_prefix;
+    ObjTree.prototype.ns_colon = opts.ns_colon||ObjTree.prototype.ns_colon;
 };
 
 $.xml2js = function(xml, opts){
@@ -40,7 +42,6 @@ ObjTree.VERSION = "0.24";
 ObjTree.prototype.xmlDecl = '<?xml version="1.0" encoding="UTF-8" ?>\n';
 ObjTree.prototype.attr_prefix = '$';
 ObjTree.prototype.ns_colon = '$';
-ObjTree.prototype.overrideMimeType = 'text/xml';
 
 
 //  method: parseXML( xmlsource )
@@ -152,16 +153,16 @@ ObjTree.prototype.parseElement = function ( elem ) {
 //  method: addNode( hash, key, count, value )
 
 ObjTree.prototype.addNode = function ( hash, key, cnts, val ) {
-    var jskey = this.removeColon(key);
+    key = this.removeColon(key);
     if ( this.__force_array[key] ) {
-        if ( cnts == 1 ) hash[jskey] = [];
-        hash[jskey][hash[jskey].length] = val;      // push
+        if ( cnts == 1 ) hash[key] = [];
+        hash[key][hash[key].length] = val;      // push
     } else if ( cnts == 1 ) {                   // 1st sibling
-        hash[jskey] = val;
+        hash[key] = val;
     } else if ( cnts == 2 ) {                   // 2nd sibling
-        hash[jskey] = [ hash[jskey], val ];
+        hash[key] = [ hash[key], val ];
     } else {                                    // 3rd sibling and more
-        hash[jskey][hash[jskey].length] = val;
+        hash[key][hash[key].length] = val;
     }
 };
 
