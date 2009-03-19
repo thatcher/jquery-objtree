@@ -1,6 +1,5 @@
 
 (function($){
-
 $.objtree = function(opts){
     ObjTree.prototype.xmlDecl = opts.xmlDecl||ObjTree.prototype.xmlDecl;
     ObjTree.prototype.attr_prefix = opts.attr_prefix||ObjTree.prototype.attr_prefix;
@@ -9,7 +8,7 @@ $.objtree = function(opts){
 
 $.xml2js = function(xml, opts){
     var objtree = $.extend(new ObjTree(), opts||{});
-    return objtree.parseXML(xml);
+    var obj = objtree.parseXML(xml);
 };
 
 $.dom2js = function(dom, opts){
@@ -49,7 +48,7 @@ ObjTree.prototype.parseXML = function ( xml ) {
     var root;
     if ( window.DOMParser ) {
         var xmldom = new DOMParser();
-//      xmldom.async = false;           // DOMParser is always sync-mode
+        // DOMParser is always sync-mode
         var dom = xmldom.parseFromString( xml, "application/xml" );
         if ( ! dom ) return;
         root = dom.documentElement;
