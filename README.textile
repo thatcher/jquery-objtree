@@ -7,11 +7,11 @@ h1. XML.ObjTree -- XML source code from/to JavaScript object like E4X
             node: "Hello, World!"
         }
     };
-    var xml1 = $.js2xml( tree1 );        // object tree to XML source
+    var xml1 = _.js2xml( tree1 );        // object tree to XML source
     alert( "xml1: "+xml1 );
 
     var xml2 = '<?xml version="1.0"?><response><error>0</error></response>';
-    var tree2 = $.xml2js( xml2 );        // XML source to object tree
+    var tree2 = _.xml2js( xml2 );        // XML source to object tree
     alert( "error: "+tree2.response.error );
 </code></pre>
 
@@ -56,7 +56,7 @@ Its JavaScript object tree like JSON/E4X:
 ** <pre><code>tree.family.father;             # the father's given name.</code></pre>
 
 * Prefix '4' is inserted before every attributes' name.
-** <pre><code>tree.family.$name;           # this family's family name</code></pre>
+** <pre><code>tree.family.$name;           	  # this family's family name</code></pre>
 
 * A array is used because this family has two boys.
 ** <pre><code>tree.family.children.boy[0];    # first boy's name</code></pre>
@@ -97,17 +97,17 @@ This property forces to change or leave it empty.
 
 h2. METHODS
 
-h3. tree = $.xml2js( xmlsrc );
+h3. tree = _.xml2js( xmlsrc );
 
 This method loads an XML document using the supplied string
 and returns its JavaScript object converted.
 
-h3. tree = $.dom2js( domnode );
+h3. tree = _.dom2js( domnode );
 
 This method parses a DOM tree (ex. responseXML.documentElement)
 and returns its JavaScript object converted.
 
-h3. xmlsrc = xotree.xml2js( tree );
+h3. xmlsrc = _.js2xml( tree );
 
 This method parses a JavaScript object tree
 and returns its XML source generated.
@@ -121,11 +121,10 @@ or both of a text node and other child nodes,
 text node's value is moved to a special node named "#text".
 
 <code><pre>
-    var xotree = new XML.ObjTree();
-    var xmlsrc = '<span class="author">Kawasaki Yusuke</span>';
-    var tree = xotree.parseXML( xmlsrc );
-    var class = tree.span.$class;        # attribute
-    var name  = tree.span["#text"];         # text node
+    var xmlsrc 	= '<span class="author">Kawasaki Yusuke</span>';
+    var tree 	= _.xml2js( xmlsrc );
+    var class 	= tree.span.$class;        # attribute
+    var name  	= tree.span._text;         # text node
 </code></pre>
 
 
