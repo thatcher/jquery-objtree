@@ -6,17 +6,19 @@
  * 	Ported with love (and little change or effort) from 
  *	Yusuke Kawasaki http://www.kawa.net/ 
  *	"""
- *	js to xml utilities (and reverse but see http://github.com/thatcher/jquery-xslt )
- *  for xml to js plugins that are MUCH faster
- *	"""
- *
+ *	NOTE: This plugin is primarily designed for server-side javascript.
+ *        For client-side js to xml utilities see 
+ *            - ( http://github.com/thatcher/jquery-xslt ) -
+ *        for xml to js plugins that are MUCH faster
  *  
+ *	"""
  */
 (function(_){
     _.objtree = function(opts){
         ObjTree.prototype.xmlDecl = opts.xmlDecl||ObjTree.prototype.xmlDecl;
         ObjTree.prototype.attr_prefix = opts.attr_prefix||ObjTree.prototype.attr_prefix;
         ObjTree.prototype.ns_colon = opts.ns_colon||ObjTree.prototype.ns_colon;
+        ObjTree.prototype.mixed_content_name = opts.ns_colon||ObjTree.prototype.mixed_content_name;
     };
     
     _.xml2js = function(xml, opts){
@@ -29,15 +31,51 @@
         return objtree.parseDOM(dom);
     };
     
-    _.js2xml =  function(js, opts){
+    _.x = _.js2xml =  function(js, opts){
         var objtree = _.extend(new ObjTree(), opts||{});
         return objtree.writeXML(js);
     };
     
     _.fn.x = function(i){
-        return _.js2xml(i?this[i]:this);
-    }
+        var xml = '';
+        if(i && this[i]){
+            xml = _.js2xml(this[i]);
+        }else{
+            for (i = 0; i < this.length; i++) {
+                xml += _.js2xml(this[i]);
+            }
+        }
+        return xml;
+    };
     
+    _.fn.tmpl = function(obj){
+        var i, _this = this, tmpl = [];
+        
+        var replacer = function(o, keys){
+            var prop, keyz = keys, newobj = {};
+            for (prop in o) {
+                if (typeof(o[prop]) == 'string') {
+                    newobj[prop] = o[prop].replace(/\|\:\w+\|/g, function(){
+                        var name;
+                        name = arguments[0].substring(2, arguments[0].length - 1);
+                        return keyz&&keyz[name]?keyz[name]:'null';
+                    });
+                }else if(typeof(o[prop]) == 'object'){
+                    newobj[prop] = replacer(o[prop], keyz)
+                }
+            }
+            return newobj;
+        };
+ 
+        for(i = 0;i<this.length;i++){
+            tmpl[i] = replacer(obj, this[i]);
+        }
+        return _(tmpl);
+    };
+    
+    _.escape = function(xml){
+        return ObjTree.prototype.xml_escape(xml);  
+    };
     // ========================================================================
     //  ObjTree -- XML source code from/to JavaScript object like E4X
     // ========================================================================
@@ -58,6 +96,7 @@
     ObjTree.prototype.xmlDecl = '<?xml version="1.0" encoding="UTF-8" ?>\n';
     ObjTree.prototype.attr_prefix = '$';
     ObjTree.prototype.ns_colon = '$';
+    ObjTree.prototype.mixed_content_name = '$';
     
     
     //  method: parseXML( xmlsource )
@@ -185,8 +224,19 @@
     //  method: writeXML( tree )
     
     ObjTree.prototype.writeXML = function ( tree ) {
-        var xml = this.hash_to_xml( null, tree );
-        return this.xmlDecl + xml;
+        var xml="", i;
+        if ( typeof(tree) == "undefined" || tree == null ) {
+            xml = '';
+        } else if ( typeof(tree) == "object" && tree.constructor == Array ) {
+            for(i=0;i<tree.length;i++){
+                xml += '\n'+this.writeXML(tree[i]);
+            }
+        } else if ( typeof(tree) == "object" ) {
+            xml = this.hash_to_xml( null, tree );
+        } else {
+            xml = tree
+        } 
+        return /*this.xmlDecl +*/ xml;
     };
     
     //  method: replaceColon( tagName, tree )
@@ -217,7 +267,22 @@
                     elem[elem.length] = this.scalar_to_xml( key, val );
                 }
             } else {
-                attr[attr.length] = " "+(this.replaceColon(key).substring(1))+'="'+(this.xml_escape( val ))+'"';
+                if (key == this.mixed_content_name) {
+                    //text node
+                    if ( typeof(val) == "undefined" || val == null ) {
+                        elem[elem.length] = " ";
+                    } else if ( typeof(val) == "object" && val.constructor == Array ) {
+                         elem[elem.length] = this.writeXML(val);
+                    } else if ( typeof(val) == "object" ) {
+                        elem[elem.length] = this.hash_to_xml( key, val );
+                    } else {
+                        elem[elem.length] = this.scalar_to_xml( key, val );
+                    }
+                } else {
+                    attr[attr.length] = " " +
+                        (this.replaceColon(key).substring(1)) + '="' +
+                        (this.xml_escape(val)) + '"';
+                }
             }
         }
         var jattr = attr.join("");
@@ -240,29 +305,32 @@
     
     ObjTree.prototype.array_to_xml = function ( name, array ) {
         var out = [];
-        name = this.replaceColon(name);
+        if(!(name == this.mixed_content_name)){
+            name = this.replaceColon(name);
+        }
         for( var i=0; i<array.length; i++ ) {
             var val = array[i];
             if ( typeof(val) == "undefined" || val == null ) {
                 out[out.length] = "<"+name+" />";
-            } else if ( typeof(val) == "object" && val.constructor == Array ) {
+            } else if ( typeof(val) == "object" && val.constructor == Array 
+                && name!=this.mixed_content_name) {
                 out[out.length] = this.array_to_xml( name, val );
             } else if ( typeof(val) == "object" ) {
                 out[out.length] = this.hash_to_xml( name, val );
             } else {
                 out[out.length] = this.scalar_to_xml( name, val );
             }
-        }
+        }    
         return out.join("");
     };
     
     //  method: scalar_to_xml( tagName, text )
     
     ObjTree.prototype.scalar_to_xml = function ( name, text ) {
-        name = this.replaceColon(name);
-        if ( name == "$text$" ) {
+        if ( name == "$" ) {
             return this.xml_escape(text);
         } else {
+            name = this.replaceColon(name);
             return "<"+name+">"+this.xml_escape(text)+"</"+name+">\n";
         }
     };
