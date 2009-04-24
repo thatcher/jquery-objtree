@@ -1,71 +1,257 @@
 
-h1. XML.ObjTree -- XML source code from/to JavaScript object like E4X
+h1. jquery-objtree is an xml<->javascipt utility plugin for jquery-jspath. 
+
+it provides a thin wrapper around yusuke kawasaki's http://www.kawa.net/XML source code.  in particular
+it focuses on js to xml conversion, and though it supports xml to js conversion, we would recommend
+http://github.com/thatcher/jquery-xslt as it's much faster,if you need to do a lot of xml to js conversion.
+
+h2. how about a simple example before I loose interest
+
+sure, good idea.  let's pretend we have a big js object we loaded
 
 <pre><code>
-    var tree1 = {
-        root: {
-            node: "Hello, World!"
-        }
-    };
-    var xml1 = _.js2xml( tree1 );        // object tree to XML source
-    alert( "xml1: "+xml1 );
+var addressbook = [{
+    $first:'chris',
+    $last:'thatcher',
+    $cell:'555-555-5555',
+    $fax:'444-444-4444',
+    address: {
+      $line1:'po box 1234',
+      $city: 'shepherdstown',
+      $state: 'WV',
+      $zipcode: '25425'
+    }
+},{
+    $first:'ariel',
+    $last:'flesler',
+    $cell:'222-222-2222',
+    address: {
+      $line1:'123 smart way',
+      $city: 'new york',
+      $state: 'NY',
+      $zipcode: '34526'
+    }
+},{
+    $first:'yusuke',
+    $last:'kawasaki',
+    $cell:'888-888-8888',
+    $fax:'999-999-9999',
+    address: {
+      $line1:'po box 8765',
+      $city: 'san fransisco',
+      $state: 'CA',
+      $zipcode: '87654'
+    }
+}];
+</code></pre>
 
-    var xml2 = '<?xml version="1.0"?><response><error>0</error></response>';
-    var tree2 = _.xml2js( xml2 );        // XML source to object tree
-    alert( "error: "+tree2.response.error );
+then I could easily serialize out a particular contact:
+
+<pre><code>
+var xml = _('[?(@.$last == 'thatcher')]', addressbook).x();
+alert( xml );			
+/* 
+<contact 	first='chris'
+			last='thatcher'
+			cell='555-555-5555'
+			fax='444-444-4444'>
+	<address 	line1='po box 1234'
+				city='shepherdstown'
+				state='WV'
+				zipcode='25425'/>
+</contact>
+*/
+</code></pre>
+
+dang dawg! that blew my mind.  let's trun the tables real quick and show the xml to js conversion:
+
+<pre><code>
+/*
+ here xml is 
+ <addressbook>
+	<contact 	first='chris'
+				last='thatcher'
+				cell='555-555-5555'
+				fax='444-444-4444'>
+		<address 	line1='po box 1234'
+					city='shepherdstown'
+					state='WV'
+					zipcode='25425'/>
+	</contact>
+	<contact 	first='ariel'
+				last='flesler'
+				cell='222-222-2222'>
+		<address 	line1='123 smart way'
+					city='new york'
+					state='NY'
+					zipcode='34526'/>
+	</contact>
+	<contact 	first='yusuke'
+				last='kawasaki's'
+				cell='888-888-8888'
+				fax='999-999-9999'>
+		<address 	line1='po box 8765'
+					city='san fransisco'
+					state='CA'
+					zipcode='87654'/>
+	</contact>
+ </addressbook>
+*/
+$.get(url, function(xml){
+	var addressbook = _.xml2js(xml).addressbook;
+	//addressbook is now exactly the addressbook of our previous example!
+});
 </code></pre>
 
 jquery-objtree is a thin wrapper around a slightly modified XML.ObjTree class (which
 is a parser/generater between XML source code and JavaScript object like E4X, ECMAScript for XML).
 
-h2. JavaScript object tree format
+h2. javascript object tree conventions
 
-A sample XML source:
+h3. properties with simple value
+
+javascript
 <pre><code>
-    <?xml version="1.0" encoding="UTF-8"?>
-    <family name="Kawasaki">
-        <father>Yasuhisa</father>
-        <mother>Chizuko</mother>
-        <children>
-            <girl>Shiori</girl>
-            <boy>Yusuke</boy>
-            <boy>Kairi</boy>
-        </children>
-    </family>
+{
+'family': {
+    '$name':    'Kawasaki',
+    'father':   'Yasuhisa',
+    'mother':   'Chizuko',
+    'children': {
+        'girl': 'Shiori'
+        'boy': [
+            'Yusuke',
+            'Kairi'
+        ]
+    }
+}
+};
+</code></pre>
+xml
+<pre><code>
+<family name="Kawasaki">
+    <father>Yasuhisa</father>
+    <mother>Chizuko</mother>
+    <children>
+        <girl>Shiori</girl>
+        <boy>Yusuke</boy>
+        <boy>Kairi</boy>
+    </children>
+</family>
 </code></pre>
 
-Its JavaScript object tree like JSON/E4X:
+'''note'''
+* the property prefixed with $ becomes an attribute.
+* all other properties with simple values are treated as elements with text content
+* arrays of simple values become a sequence of elements
+
+
+h3. property with text content and attributes
+
+javascript
 <pre><code>
-    {
-        'family': {
-            '$name':    'Kawasaki',
-            'father':   'Yasuhisa',
-            'mother':   'Chizuko',
-            'children': {
-                'girl': 'Shiori'
-                'boy': [
-                    'Yusuke',
-                    'Kairi'
-                ]
+{
+'msg': {
+    '$user': 'thatcher',
+    '$':     'Hey, yt?',
+}
+};
+</code></pre>
+xml
+<pre><code>
+<msg user="thatcher">
+	Hey, yt?
+</msg>
+</code></pre>
+
+'''note'''
+* the property prefixed with $ becomes an attribute.
+* the node named $ is treated as a text node if the value is simple (arrays become mixed context)
+
+h3. objtree namespacing
+javascript
+<pre><code>
+{
+'feed': {
+	$xmlns:'http://www.w3.org/2005/Atom'
+	$xmlns$xhtml:'http://www.w3.org/1999/xhtml',
+	title:'example feed',
+	updated: 'Tue, 21 Apr 2009 22:42:45 GMT',
+	id: 'urn:uuid:124652-3264-2346231-rw3r3-1',
+	entry:[{
+		title:'example entry',
+        link: { $href='http://www.example.org' },
+        id:'urn:uuid:25234-45yewg-356234-fq34-23',
+        updated: 'Tue, 21 Apr 2009 22:42:45 GMT',
+        summary:{
+        	 $type:"xhtml",
+            ul: {
+            	$xmlns:'http://www.w3.org/1999/xhtml',
+            	li:['a','b','c']
             }
         }
-    };
+	}]
+}
+};
+</code></pre>
+xml
+<pre><code>
+<feed xmlns='http://www.w3.org/2005/Atom'
+	xmlns:xhtml='http://www.w3.org/1999/xhtml'
+	<title>example feed</title>
+	<updated>Tue, 21 Apr 2009 22:42:45 GMT</updated>
+	<id>urn:uuid:124652-3264-2346231-rw3r3-1</id>
+	<entry>
+		<title>example entry</title>
+        <link href='http://www.example.org/'/>
+        <id>urn:uuid:25234-45yewg-356234-fq34-23</id>
+        <updated>Tue, 21 Apr 2009 22:42:45 GMT</updated>
+        <summary type='xhtml'>
+            <ul xmlns='http://www.w3.org/1999/xhtml'>
+            	<li>a</li>
+            	<li>b</li>
+            	<li>c</li>
+            </ul>
+        </summary>
+	</entry>
+</feed>
 </code></pre>
 
-* Each elements are parsed into objects:
-** <pre><code>tree.family.father;             # the father's given name.</code></pre>
+'''note'''
+* any occurance of '$' not at the begining of the property name will be replaced with ':'
+* jquery-object has no knowledge of what a namespace means, but allows you to use them
 
-* Prefix '4' is inserted before every attributes' name.
-** <pre><code>tree.family.$name;           	  # this family's family name</code></pre>
+h3.  mixed content
 
-* A array is used because this family has two boys.
-** <pre><code>tree.family.children.boy[0];    # first boy's name</code></pre>
-** <pre><code>tree.family.children.boy[1];    # second boy's name</code></pre>
-** <pre><code>tree.family.children.girl;      # (girl has no other sisiters)</code></pre>
+
+javascript
+<pre><code>
+{
+'p': {
+    '$': [
+	    'this is a ',
+	    {a:{$href:'http:www.example.org', $:'link'}},
+	    'to a great page I found on the web'
+    ]
+}
+};
+</code></pre>
+xml
+<pre><code>
+<p>
+	this is a 
+	<a href='http://www.example.org'>link</a> 
+	to a great page I found on the web
+</p>
+</code></pre>
+
+'''note'''
+* the property named $ is an array, so each item is treated treated as text nodes when 
+  its a simple type or an element when its an object or array.
 
 h2. CONFIGURATION OPTIONS
 
-The options may either be set globally by using $.objtree() static method on the jQuery namespace.
+The options may either be set globally by using _.objtree() static method on the jquery-jspath namespace.
 The options for configuring are given below.
 
 h3. opts.force_array = [ "rdf$li", "item", "$xmlns" ];
@@ -107,83 +293,40 @@ h3. tree = _.dom2js( domnode );
 This method parses a DOM tree (ex. responseXML.documentElement)
 and returns its JavaScript object converted.
 
-h3. xmlsrc = _.js2xml( tree );
+h3. xmlsrc = _x( tree ) = _.js2xml( tree );
+h3. xmlsrc = _( path, tree ).x();
 
 This method parses a JavaScript object tree
 and returns its XML source generated.
 
-h2. EXAMPLES
+h3. _.fn.tmpl
 
-h3. Text node and attributes
-
-If a element has both of a text node and attributes
-or both of a text node and other child nodes,
-text node's value is moved to a special node named "#text".
-
-<code><pre>
-    var xmlsrc 	= '<span class="author">Kawasaki Yusuke</span>';
-    var tree 	= _.xml2js( xmlsrc );
-    var class 	= tree.span.$class;        # attribute
-    var name  	= tree.span._text;         # text node
+<pre><code>
+xmlsrc = _('.*',[
+	{name:'chris'},
+	{name:'thatcher'}
+]).tmpl({a:{$href:'|:name|', $:'|:name|'}}).x();
 </code></pre>
 
+This method allows you to create an object-to-object template, of couse you can always use
+map
 
-h3. Simple RSS reader
-
-This is a RSS reader which loads RDF file and displays all items.
-<code><pre>
-    var xotree = new XML.ObjTree();
-    xotree.;
-    $.ajax({
-        type:"GET",
-        url : "http://example.com/news-rdf.xml",
-        success : function( xml ) {
-            var tree = $.dom2js(xml, {
-                force_array : [ "rdf$li", "item" ]
-            });
-            var elem = document.getElementById("rss_here");
-            for( var i=0; i < tree.rdf$RDF.item.length; i++ ) {
-                var divtag = document.createElement( "div" );
-                var atag = document.createElement( "a" );
-                atag.href = tree.rdf$RDF.item[i].link;
-                var title = tree.rdf$RDF.item[i].title;
-                var tnode = document.createTextNode( title );
-                atag.appendChild( tnode );
-                divtag.appendChild( atag );
-                elem.appendChild( divtag );
-            }
-        }
-    });
+<pre><code>
+_('.*',[
+    {name:'chris'},
+    {name:'thatcher'}
+]).map(function(){
+    return {a:{$href:this.name, $:this.name}};
+}).x()
 </code></pre>
 
-h3. XML-RPC using writeXML, prototype.js and parseDOM
+both will produce
 
-If you wish to use prototype.js's Ajax.Request class by yourself:
-<code><pre>
-    var reqtree = ;
-    $.ajax({
-        type:"POST",
-        url:"http://example.com/xmlrpc",
-        data: $.js2xml({
-            methodCall: {
-                methodName: "weblogUpdates.ping",
-                param: [
-                    { value: "Kawa.net xp top page" },  // 1st param
-                    { value: "http://www.kawa.net/" }   // 2nd param
-                ]
-            }
-        }),
-        processData:false,
-        success: function( req ) {
-            var resdom = req.responseXML.documentElement;
-            // XML-DOM to JS-Object
-            var restree = $.dom2js( resdom, {
-                force_array: [ "member" ]
-            } );   
-            alert( restree.methodResponse.member[0] );
-        }
-    });
+<pre><code>
+<a href="chris">chris</a>
+<a href="thatcher">thatcher</a>
 </code></pre>
+
 
 h1. ORIGINAL AUTHOR Yusuke Kawasaki http://www.kawa.net/
 

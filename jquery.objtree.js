@@ -76,6 +76,8 @@
     _.escape = function(xml){
         return ObjTree.prototype.xml_escape(xml);  
     };
+    
+    
     // ========================================================================
     //  ObjTree -- XML source code from/to JavaScript object like E4X
     // ========================================================================
