@@ -87,7 +87,7 @@ dang dawg! that blew my mind.  let's trun the tables real quick and show the xml
 					zipcode='34526'/>
 	</contact>
 	<contact 	first='yusuke'
-				last='kawasaki's'
+				last='kawasaki'
 				cell='888-888-8888'
 				fax='999-999-9999'>
 		<address 	line1='po box 8765'
@@ -102,9 +102,6 @@ $.get(url, function(xml){
 	//addressbook is now exactly the addressbook of our previous example!
 });
 </code></pre>
-
-jquery-objtree is a thin wrapper around a slightly modified XML.ObjTree class (which
-is a parser/generater between XML source code and JavaScript object like E4X, ECMAScript for XML).
 
 h2. javascript object tree conventions
 
@@ -169,6 +166,7 @@ xml
 * the node named $ is treated as a text node if the value is simple (arrays become mixed context)
 
 h3. objtree namespacing
+
 javascript
 <pre><code>
 {
@@ -293,7 +291,8 @@ h3. tree = _.dom2js( domnode );
 This method parses a DOM tree (ex. responseXML.documentElement)
 and returns its JavaScript object converted.
 
-h3. xmlsrc = _x( tree ) = _.js2xml( tree );
+h3. xmlsrc = _x( tree ) = _.js2xml( tree ); 
+
 h3. xmlsrc = _( path, tree ).x();
 
 This method parses a JavaScript object tree
