@@ -326,6 +326,18 @@ both will produce
 <a href="thatcher">thatcher</a>
 </code></pre>
 
+also check out these 
+jquery-jspath plugins:
+
+* http://github.com/thatcher/jquery-jspath
+* http://github.com/thatcher/jquery-json
+* http://github.com/thatcher/jquery-loremipsum
+* http://github.com/thatcher/jquery-objtree
+* http://github.com/thatcher/jquery-xslt
+
+also please check out the spec for each plugin (test/test.html).  special thanks to aaron quint for the 
+jqunit-spec plugin that all of these plugins use!
+
 
 h1. ORIGINAL AUTHOR Yusuke Kawasaki http://www.kawa.net/
 
