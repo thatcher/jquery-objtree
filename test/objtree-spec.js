@@ -1,5 +1,14 @@
 (function(_){
+    // we add brandon aarons outerhtml for convenience to display 
+    // the entire dom object when applicable
+    (function($) {
+     // Returns whether or not a result set has results in it
+     $.fn.outerHTML = function() {
+       return $('<div>').append( this.eq(0).clone() ).html();
+     };
+    })(jQuery);
   	// RSpec/Bacon Style
+    
 	with (jqUnit) {
 		
 		//tests basic init functionality
@@ -71,17 +80,6 @@
             ]).x());
             equals(expected, actual, 'with attributes and text\n');
             
-        }).should('create a template for tmpl  $',function(){
-            
-            var expected = [{a:{$href:'chris'}},{a:{$href:'thatcher'}}];
-            var actual = _('.*',[
-                {name:'chris'},
-                {name:'thatcher'}
-            ]).tmpl({a:{$href:'|:name|'}});
-            equals(actual.length, 2, 'returned the same number of templates');
-            equals(actual[0].a.$href, expected[0].a.$href, 'replace the item with the named value');
-            equals(actual[1].a.$href, expected[1].a.$href, 'replace the item with the named value');
-            
         }).should('return mapped array and chain into xml',function(){
             
             var expected = _.escape('<a href="chris">chris</a>\n<a href="thatcher">thatcher</a>\n');
@@ -93,11 +91,69 @@
             }).x());
             equals( actual, expected, 'returned expected xml');
             
-        }).pending('should do something awesome', function(){
+        }).should('render the template multiple times with different data', function(){
             
-			// It doesnt matter what you put here it wont be run until
-			// you change this to an actual spec
-			ok(false);
+			$.ajax({
+                url:'data/template_00.json',
+                dataType:'html',
+                async:false,
+                success: function(xml){
+                    var template = $(xml);
+                    var rendered = _.e3x(template, {
+                        description: 'this is a pig! oink, oink!',
+                        msg:'hello world'
+                    });
+                    ok(rendered, _.escape($(rendered).html()));
+                    
+                    rendered = _.e3x(template, {
+                        description: 'this is a cow! moo, moo!',
+                        msg:'goodbye cruel world'
+                    });
+                    ok(rendered, _.escape($(rendered).outerHTML()));
+                }
+            });
+            
+		}).should('render the template and iterate list', function(){
+            
+			$.ajax({
+                url:'data/template_01.json',
+                dataType:'html',
+                async:false,
+                success: function(xml){
+                    var template = $(xml);
+                    var rendered = _.e3x(template, {
+                        _:_,//include jspath
+                        todo: ['wash socks', 'finish taxes', 'sleep in']
+                    });
+                    ok(rendered, _.escape($(rendered).outerHTML()));
+                }
+            });
+            
+		}).should('render multiple templates', function(){
+            
+			$.ajax({
+                url:'data/template_02.json',
+                dataType:'html',
+                async:false,
+                success: function(xml){
+                    var template = $(xml);
+                    var rendered = _.e3x(template, {
+                        _:_,//include jspath
+                        title:'Do or Die!',
+                        todo: [{
+                            note:'wash socks',
+                            duedate: '9/11/09'
+                        },{ 
+                            note:'finish taxes',
+                            duedate: '9/12/09'
+                        },{
+                            note:'sleep in',
+                            duedate: '9/13/09'
+                       }]
+                    });
+                    ok(rendered, _.escape($(rendered).outerHTML()));
+                }
+            });
             
 		});
 			

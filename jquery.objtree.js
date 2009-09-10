@@ -58,36 +58,22 @@
         return xml;
     };
     
-    _.fn.tmpl = function(obj){
-        var i, _this = this, tmpl = [];
-        
-        var replacer = function(o, keys){
-            var prop, keyz = keys, newobj = {};
-            for (prop in o) {
-                if (typeof(o[prop]) == 'string') {
-                    newobj[prop] = o[prop].replace(/\|\:\w+\|/g, function(){
-                        var name;
-                        name = arguments[0].substring(2, arguments[0].length - 1);
-                        return keyz&&keyz[name]?keyz[name]:'null';
-                    });
-                }else if(typeof(o[prop]) == 'object'){
-                    newobj[prop] = replacer(o[prop], keyz)
-                }
-            }
-            return newobj;
-        };
- 
-        for(i = 0;i<this.length;i++){
-            tmpl[i] = replacer(obj, this[i]);
-        }
-        return _(tmpl);
-    };
-    
     _.escape = function(xml){
         return ObjTree.prototype.xml_escape(xml);  
     };
     
-    
+    _.e3x = function(xml, model){
+        var t = $(xml).clone();
+        $('.e3x', t).each(function(){
+            var result,
+                e3x = $(this).text().replace('{','{__$__:');
+            with(model||{}){
+                eval('result = '+e3x);
+            }
+            $(this).html(_.x(result.__$__));
+        });
+        return t;
+    };
     // ========================================================================
     //  ObjTree -- XML source code from/to JavaScript object like E4X
     // ========================================================================

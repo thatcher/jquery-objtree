@@ -1,7 +1,8 @@
 
 h1. jquery-objtree is an xml<->javascipt utility plugin for jquery-jspath. 
 
-it provides a thin wrapper around yusuke kawasaki's http://www.kawa.net/XML source code.  in particular
+it provides a thin wrapper around yusuke kawasaki's http://www.kawa.net/XML (modified) source code.  
+we largely use it as a stand-in for e4x for use as an html template engine. in particular
 it focuses on js to xml conversion, and though it supports xml to js conversion, we would recommend
 http://github.com/thatcher/jquery-xslt as it's much faster,if you need to do a lot of xml to js conversion.
 
@@ -63,7 +64,7 @@ alert( xml );
 */
 </code></pre>
 
-dang dawg! that blew my mind.  let's trun the tables real quick and show the xml to js conversion:
+dang dawg! that blew my mind.  let's turn the tables real quick and show the xml to js conversion:
 
 <pre><code>
 /*
@@ -102,6 +103,85 @@ $.get(url, function(xml){
 	//addressbook is now exactly the addressbook of our previous example!
 });
 </code></pre>
+
+h2. e4x-like templates
+
+e4x is an awesome extension to the ecma standard (that's javascript if'n you didn't already know).
+it makes xml objects native javascript objects like Object and Array.  i highly recommend this
+overview http://www.rephrase.net/days/07/06/e4x .
+
+Of course IEpre8 has no support so you may have never heard of it.  jquery-objtree has includes
+a 10 line plugin to let you emulate the construction of e4x XML objects!  which probably means
+nothing to you so lets see what the heck that mean.
+
+h3.  e3x - a very fast an clean templating language when e4x isn't available
+
+lets pretend we have this html snippet in a file on our server and we load it via
+ajax into a local variable named 'template'
+
+<pre><code>
+<div id='todo'>
+    <h2 class='e3x'>{title}</h2>
+    <ul class='e3x'>{
+        _('.*',todo).map(function(index, value){
+            return {li:{
+                $:[ 
+                    this.note, 
+                    {strong:this.duedate}
+                ]
+            }}
+        }).x()
+    }</ul>
+</div>
+</code></pre>
+Note: 
+The use of the jQuery map function in combination with the x() plugin is a trick we learned 
+from actual use of e4x as a templating engine, and it rocks!
+
+so each element with the class 'e3x' will be rendered just like an e4x xml instance when we do this:
+
+<pre><code>
+	$.ajax({
+        url:'mytemplate.html',
+        dataType:'html',
+        async:false,
+        success: function(xml){
+            var template = $(xml);
+            var rendered = _.e3x(template, {
+                _:_,//include jspath
+                title:'Do or Die!',
+                todo: [{
+                    note:'wash socks',
+                    duedate: '9/11/09'
+                },{ 
+                    note:'finish taxes',
+                    duedate: '9/12/09'
+                },{
+                    note:'sleep in',
+                    duedate: '9/13/09'
+               }]
+            });
+            console.log( $(rendered).outerHTML() );
+        }
+    });
+</code></pre>
+
+and the result is a dom object that would serialze to look like:
+
+<pre><code>
+<div id="todo">  
+	<h2 class="e3x">Do or Die!</h2>  
+	<ul class="e3x">
+		<li> wash socks <strong>9/11/09</strong> </li> 
+		<li> finish taxes <strong>9/12/09</strong> </li> 
+		<li> sleep in <strong>9/13/09</strong> </li>
+	 </ul>  
+</div>
+
+</code></pre>
+
+There is tons of fun to be had with this and it can keep your project cleaner too (keep 
+that html out of your javascript whenever possible!)
 
 h2. javascript object tree conventions
 
