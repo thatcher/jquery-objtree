@@ -1,0 +1,13 @@
+<ul>
+    <li class='e3x'>{
+        {div:{
+            $id: 1,
+            $class: 'container',
+            $:[description, 
+                {a:{
+                    $href:'../../',
+                    $:msg }
+            }]
+        }}
+    }</li>
+</ul>

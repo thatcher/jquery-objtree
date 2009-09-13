@@ -1,0 +1,7 @@
+<div id='todo'>
+    <ul class='e3x'>{
+        _('..*', todo).map(function(index, value){
+            return {li:value}
+        }).x()
+    }</ul>
+</div>

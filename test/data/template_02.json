@@ -1,0 +1,13 @@
+<div id='todo'>
+    <h2 class='e3x'>{title}</h2>
+    <ul class='e3x'>{
+        _('.*',todo).map(function(index, value){
+            return {li:{
+                $:[ 
+                    this.note, 
+                    {strong:this.duedate}
+                ]
+            }}
+        }).x()
+    }</ul>
+</div>
