@@ -23,6 +23,8 @@
  *          depends on jquery-jspath 
  *  ( http://github.com/thatcher/jquery-jspath )
  */
+var jsPath = jsPath||jQuery;
+
 (function(_){
     _.objtree = function(opts){
         ObjTree.prototype.xmlDecl = opts.xmlDecl||ObjTree.prototype.xmlDecl;
