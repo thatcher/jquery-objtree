@@ -25,7 +25,7 @@
  */
 var jsPath = jsPath||jQuery;
 
-(function(_){
+(function($,_){
     _.objtree = function(opts){
         ObjTree.prototype.xmlDecl = opts.xmlDecl||ObjTree.prototype.xmlDecl;
         ObjTree.prototype.attr_prefix = opts.attr_prefix||ObjTree.prototype.attr_prefix;
@@ -342,4 +342,4 @@ var jsPath = jsPath||jQuery;
     };
 
 
-})(jsPath);
+})(jQuery, jsPath);
